@@ -1,8 +1,12 @@
+import 'dart:io';
+
+import 'package:app_settings/app_settings.dart';
 import 'package:appointment_demo/app/app_data_model.dart';
 import 'package:appointment_demo/app/app_routes.dart';
 import 'package:appointment_demo/ui/home/model/home_model.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomeController extends GetxController {
   RxList<HomeModel> slotList = <HomeModel>[].obs;
@@ -53,6 +57,18 @@ class HomeController extends GetxController {
 
   ///[openGallery] is used when user click on profile select floating button
   Future<void> openGallery() async {
-    final XFile? image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (await Permission.storage.request().isGranted) {
+      await ImagePicker().pickImage(source: ImageSource.gallery);
+    } else {
+      if (Platform.isIOS) {
+        if (await Permission.location.isPermanentlyDenied) {
+          AppSettings.openAppSettings();
+        }
+      } else {
+        if (!await Permission.location.shouldShowRequestRationale && await Permission.location.status.isDenied) {
+          AppSettings.openAppSettings();
+        }
+      }
+    }
   }
 }
